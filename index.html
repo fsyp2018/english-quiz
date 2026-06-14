@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>國小高年級英文隨機測驗挑戰</title>
+    <title>國小高年級隨機測驗挑戰系統</title>
     <style>
         :root {
             --primary-color: #4A90E2;
             --success-color: #2ECC71;
             --error-color: #E74C3C;
             --bg-color: #F5F7FA;
+            --chinese-color: #E67E22;
         }
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -35,6 +36,26 @@
             font-size: 24px;
             margin-bottom: 20px;
         }
+        .menu-box {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        .menu-btn {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .menu-btn.english { background-color: var(--primary-color); }
+        .menu-btn.chinese { background-color: var(--chinese-color); }
+        .menu-btn:hover { transform: scale(1.02); }
+        
         .progress {
             font-size: 14px;
             color: #666;
@@ -101,10 +122,7 @@
             cursor: pointer;
             display: none;
         }
-        .result-box {
-            text-align: center;
-            display: none;
-        }
+        .result-box { text-align: center; display: none; }
         .score-text {
             font-size: 48px;
             color: var(--primary-color);
@@ -125,9 +143,18 @@
 <body>
 
 <div class="quiz-container">
-    <div id="quiz-ui">
-        <h1>🌟 英文隨機挑戰 🌟</h1>
-        <div class="progress" id="progress">題目載入中...</div>
+    <div id="menu-ui">
+        <h1>🎒 國小高年級測驗挑戰 🎒</h1>
+        <p style="text-align: center; color: #666;">請選擇今天想要挑戰的考卷科目：</p>
+        <div class="menu-box">
+            <button class="menu-btn english" onclick="selectSubject('英文')">🔤 英文 隨機挑戰 (20題)</button>
+            <button class="menu-btn chinese" onclick="selectSubject('國文')">📖 國文 隨機挑戰 (20題)</button>
+        </div>
+    </div>
+
+    <div id="quiz-ui" style="display: none;">
+        <h1 id="quiz-title">🌟 挑戰中 🌟</h1>
+        <div class="progress" id="progress">準備中...</div>
         <div class="question-box" id="question-text"></div>
         <div class="options-list" id="options-container"></div>
         <div class="hint-box" id="hint-container"></div>
@@ -138,31 +165,30 @@
         <h1>🎉 測試完成 🎉</h1>
         <p>你的最終得分是：</p>
         <div class="score-text" id="score-display">0 / 0</div>
-        <button class="restart-btn" onclick="startQuiz()">再挑戰一次（題目會重新洗牌喔！）</button>
+        <button class="restart-btn" onclick="backToMenu()">返回科目選單</button>
     </div>
 </div>
 
 <script>
-    let allQuestions = [];     // 存放從 JSON 讀取的 100 題總題庫
-    let currentQuizSet = [];   // 本次測驗隨機抽出的 20 題考卷
-    let currentIndex = 0;      // 當前作答到第幾題
-    let score = 0;             // 本次答對的題數
-    const TOTAL_QUESTIONS_TO_PLAY = 20; // 每次測驗固定出 20 題
+    let allQuestions = [];     // 存放從 JSON 載入的完整總題庫
+    let currentQuizSet = [];   // 當前過濾後並抽出的 20 題考卷
+    let currentIndex = 0;
+    let score = 0;
+    let selectedSubjectName = "";
+    const TOTAL_QUESTIONS_TO_PLAY = 20; // 每次測驗出 20 題
 
-    // 載入題庫
+    // 網頁啟動時自動讀取外部題庫
     async function loadQuestions() {
         try {
-            // 加上時間戳記，防止瀏覽器快取舊資料
             const response = await fetch('questions.json?v=' + Date.now());
             allQuestions = await response.json();
-            startQuiz();
         } catch (error) {
-            document.getElementById('progress').innerText = '載入題庫失敗，請確認 questions.json 是否存在。';
+            alert('載入題庫失敗，請確認 questions.json 格式與路徑正確！');
             console.error(error);
         }
     }
 
-    // Fisher-Yates 洗牌演算法（用來徹底打亂陣列順序）
+    // 洗牌演算法
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -171,33 +197,40 @@
         return array;
     }
 
-    // 開始新一輪的 20 題測驗
-    function startQuiz() {
-        document.getElementById('result-ui').style.display = 'none';
-        document.getElementById('quiz-ui').style.display = 'block';
+    // 使用者在首頁選擇了科目
+    function selectSubject(subject) {
+        selectedSubjectName = subject;
         
+        // 1. 從總題庫中，撈出符合該科目的題目
+        let filteredPool = allQuestions.filter(q => q.subject === subject);
+        
+        if (filteredPool.length === 0) {
+            alert(`目前題庫內還沒有【${subject}】的題目喔！請先在 questions.json 內新增。`);
+            return;
+        }
+
+        // 2. 切換 UI 介面
+        document.getElementById('menu-ui').style.display = 'none';
+        document.getElementById('quiz-ui').style.display = 'block';
+        document.getElementById('quiz-title').innerText = `🌟 ${subject}隨機挑戰 🌟`;
+
         score = 0;
         currentIndex = 0;
 
-        // 1. 先把 100 題總題庫完全打亂
-        let shuffledPool = shuffle([...allQuestions]);
-        
-        // 2. 從中切出前 20 題，作為這一次不重複的考卷
-        currentQuizSet = shuffledPool.slice(0, Math.min(TOTAL_QUESTIONS_TO_PLAY, allQuestions.length));
+        // 3. 把該科目的題庫打亂，並盲抽 20 題（如果題庫不足 20 題就全出）
+        let shuffledPool = shuffle([...filteredPool]);
+        currentQuizSet = shuffledPool.slice(0, Math.min(TOTAL_QUESTIONS_TO_PLAY, filteredPool.length));
 
         showQuestion();
     }
 
-    // 顯示當前題目
+    // 顯示題目
     function showQuestion() {
-        // 從選出的 20 題中拿到當前題目
         const currentQ = currentQuizSet[currentIndex];
         
-        // 更新上方進度條（例如：第 5 題 / 共 20 題）
         document.getElementById('progress').innerText = `第 ${currentIndex + 1} 題 / 共 ${currentQuizSet.length} 題`;
         document.getElementById('question-text').innerText = `【${currentQ.category}】${currentQ.question}`;
         
-        // 隱藏下一題按鈕與提示框
         document.getElementById('next-button').style.display = 'none';
         const hintBox = document.getElementById('hint-container');
         hintBox.style.display = 'none';
@@ -205,10 +238,9 @@
         const optionsContainer = document.getElementById('options-container');
         optionsContainer.innerHTML = '';
         
-        // 【核心】將當前題目的 4 個選項進行隨機打亂，每次順序都不同
+        // 選項隨機打亂順序
         let shuffledOptions = shuffle([...currentQ.options]);
 
-        // 生成選項按鈕
         shuffledOptions.forEach(option => {
             const button = document.createElement('button');
             button.className = 'option-btn';
@@ -221,7 +253,6 @@
     // 檢查答案
     function checkAnswer(selectedButton, chosenOption, correctAnswer, hintText) {
         const buttons = document.querySelectorAll('.option-btn');
-        // 點選後鎖定所有按鈕，防止重複點選
         buttons.forEach(btn => btn.disabled = true);
 
         if (chosenOption === correctAnswer) {
@@ -229,13 +260,11 @@
             score++;
         } else {
             selectedButton.classList.add('wrong');
-            // 答錯時，自動將正確答案標示為綠色
             buttons.forEach(btn => {
                 if (btn.innerText === correctAnswer) {
                     btn.classList.add('correct');
                 }
             });
-            // 答錯時顯示複習小提示
             if(hintText) {
                 const hintBox = document.getElementById('hint-container');
                 hintBox.innerText = `💡 複習小提示：${hintText}`;
@@ -244,16 +273,15 @@
         }
 
         const nextBtn = document.getElementById('next-button');
-        // 判斷是否還有下一題
         if (currentIndex < currentQuizSet.length - 1) {
             nextBtn.innerText = '下一題';
         } else {
-            nextBtn.innerText = '查看本次測驗成果';
+            nextBtn.innerText = '查看測驗成果';
         }
         nextBtn.style.display = 'block';
     }
 
-    // 前進到下一題
+    // 前進下一題
     function nextQuestion() {
         currentIndex++; 
         if (currentIndex < currentQuizSet.length) {
@@ -263,11 +291,17 @@
         }
     }
 
-    // 顯示 20 題結算成果
+    // 結算
     function showEndScreen() {
         document.getElementById('quiz-ui').style.display = 'none';
         document.getElementById('result-ui').style.display = 'block';
         document.getElementById('score-display').innerText = `${score} / ${currentQuizSet.length}`;
+    }
+
+    // 回首頁選單
+    function backToMenu() {
+        document.getElementById('result-ui').style.display = 'none';
+        document.getElementById('menu-ui').style.display = 'block';
     }
 
     window.onload = loadQuestions;
