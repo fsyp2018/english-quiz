@@ -143,16 +143,17 @@
 </div>
 
 <script>
-    let allQuestions = []; // 存放從 JSON 讀取的所有題目
-    let currentQuestions = []; // 本次測驗抽出的題目
-    let currentIndex = 0;
-    let score = 0;
-    const QUESTIONS_TO_PLAY = 5; // 每次測驗想讓小朋友玩幾題？（可自由修改）
+    let allQuestions = []; // 總題庫
+    let shuffledPool = []; // 洗牌後的全題庫發牌堆
+    let currentIndex = 0;  // 當前發到第幾張牌
+    let score = 0;         // 答對總題數
+    let totalAnswered = 0; // 累計作答總數
 
-    // 網頁開啟時，自動去抓取同目錄下的 json 檔案
+    // 載入題庫
     async function loadQuestions() {
         try {
-            const response = await fetch('questions.json');
+            // 加上時間戳記，徹底破解瀏覽器快取不更新的問題！
+            const response = await fetch('questions.json?v=' + Date.now());
             allQuestions = await response.json();
             startQuiz();
         } catch (error) {
@@ -161,7 +162,7 @@
         }
     }
 
-    // 洗牌演算法 (Fisher-Yates Shuffle) 用來打亂陣列
+    // Fisher-Yates 洗牌演算法
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -170,39 +171,38 @@
         return array;
     }
 
-    // 開始（或重新開始）測驗
+    // 初始化/重置測驗
     function startQuiz() {
         document.getElementById('result-ui').style.display = 'none';
         document.getElementById('quiz-ui').style.display = 'block';
         
         score = 0;
+        totalAnswered = 0;
         currentIndex = 0;
 
-        // 1. 先把總題庫完全打亂
-        let shuffledPool = shuffle([...allQuestions]);
-        // 2. 取出設定的題數（例如從總題庫隨機抽 5 題）
-        currentQuestions = shuffledPool.slice(0, Math.min(QUESTIONS_TO_PLAY, allQuestions.length));
+        // 一口氣把 100 題複製並徹底打亂，作為本次的發牌堆
+        shuffledPool = shuffle([...allQuestions]);
 
         showQuestion();
     }
 
     // 顯示當前題目
     function showQuestion() {
-        const currentQ = currentQuestions[currentIndex];
+        // 從打亂的牌堆中拿出當前那一題
+        const currentQ = shuffledPool[currentIndex];
         
-        // 更新進度條
-        document.getElementById('progress').innerText = `第 ${currentIndex + 1} 題 / 共 ${currentQuestions.length} 題`;
-        document.getElementById('question-text').innerText = currentQ.question;
+        // 更新顯示進度
+        document.getElementById('progress').innerText = `已挑戰: ${totalAnswered} 題 | 答對: ${score} 題 (總題庫共 ${allQuestions.length} 題)`;
+        document.getElementById('question-text').innerText = `【${currentQ.category}】${currentQ.question}`;
         
-        // 隱藏下一題按鈕與提示框
         document.getElementById('next-button').style.display = 'none';
         const hintBox = document.getElementById('hint-container');
         hintBox.style.display = 'none';
 
-        // 生成選項，並且連選項順序都一起「隨機打亂」
         const optionsContainer = document.getElementById('options-container');
         optionsContainer.innerHTML = '';
         
+        // 選項也打亂
         let shuffledOptions = shuffle([...currentQ.options]);
 
         shuffledOptions.forEach(option => {
@@ -214,24 +214,23 @@
         });
     }
 
-    // 檢查答案是否正確
+    // 檢查答案
     function checkAnswer(selectedButton, chosenOption, correctAnswer, hintText) {
         const buttons = document.querySelectorAll('.option-btn');
-        // 點選後，把所有選項鎖定，不能重複點選
         buttons.forEach(btn => btn.disabled = true);
+
+        totalAnswered++;
 
         if (chosenOption === correctAnswer) {
             selectedButton.classList.add('correct');
             score++;
         } else {
             selectedButton.classList.add('wrong');
-            // 同時把正確答案標示出來（綠色）
             buttons.forEach(btn => {
                 if (btn.innerText === correctAnswer) {
                     btn.classList.add('correct');
                 }
             });
-            // 答錯時，顯示貼心提示幫小朋友複習
             if(hintText) {
                 const hintBox = document.getElementById('hint-container');
                 hintBox.innerText = `💡 複習小提示：${hintText}`;
@@ -239,34 +238,33 @@
             }
         }
 
-        // 顯示「下一題」或「看結果」按鈕
         const nextBtn = document.getElementById('next-button');
-        if (currentIndex < currentQuestions.length - 1) {
-            nextBtn.innerText = '下一題';
+        // 判斷發牌堆是不是發完了
+        if (currentIndex < shuffledPool.length - 1) {
+            nextBtn.innerText = '挑戰下一題 (不重複)';
         } else {
-            nextBtn.innerText = '查看測驗結果';
+            nextBtn.innerText = '終極通關！查看成果';
         }
         nextBtn.style.display = 'block';
     }
 
     // 前進到下一題
     function nextQuestion() {
-        currentIndex++;
-        if (currentIndex < currentQuestions.length) {
+        currentIndex++; // 牌堆指標往下移一張
+        if (currentIndex < shuffledPool.length) {
             showQuestion();
         } else {
             showEndScreen();
         }
     }
 
-    // 顯示結算畫面
+    // 結算畫面
     function showEndScreen() {
         document.getElementById('quiz-ui').style.display = 'none';
         document.getElementById('result-ui').style.display = 'block';
-        document.getElementById('score-display').innerText = `${score} / ${currentQuestions.length}`;
+        document.getElementById('score-display').innerText = `${score} / ${totalAnswered}`;
     }
 
-    // 網頁載入後立即啟動
     window.onload = loadQuestions;
 </script>
 
