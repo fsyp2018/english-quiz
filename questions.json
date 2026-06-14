@@ -1,0 +1,32 @@
+[
+  {
+    "question": "選出正確的單字：我們夏天常常去海邊。 It is very hot in ________. We can go to the beach.",
+    "options": ["spring", "summer", "autumn", "winter"],
+    "answer": "summer",
+    "hint": "想一想哪一個季節最炎熱，大家喜歡在這個季節吃冰和游泳？"
+  },
+  {
+    "question": "文法與句型：請選出正確的動詞形式。 Gary ________ English every night.",
+    "options": ["study", "studies", "studying", "studied"],
+    "answer": "studies",
+    "hint": "注意主詞 Gary 是單數一個人，而且 every night 代表一種規律的習慣喔。"
+  },
+  {
+    "question": "情境對話：A: How do you go to school?  B: I go to school ________.",
+    "options": ["by MRT", "on MRT", "take MRT", "by a MRT"],
+    "answer": "by MRT",
+    "hint": "詢問「如何去學校」是在問交通方式，最常用的片語結構是「介系詞 by + 交通工具」。"
+  },
+  {
+    "question": "選出正確的單字：我的喉嚨痛，我需要去看醫生。 I have a sore ________. I need to see a doctor.",
+    "options": ["head", "stomach", "throat", "knee"],
+    "answer": "throat",
+    "hint": "當我們感冒、吞東西會痛的時候，是身體的哪一個部位在痛呢？"
+  },
+  {
+    "question": "文法與問句：A: ________ is the weather today?  B: It is rainy and cool.",
+    "options": ["What", "How", "Where", "Who"],
+    "answer": "How",
+    "hint": "想想看，除了「What is the weather like?」之外，另一個詢問天氣狀況的疑問詞是什麼？"
+  }
+]

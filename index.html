@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國小高年級英文隨機測驗挑戰</title>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --success-color: #2ECC71;
+            --error-color: #E74C3C;
+            --bg-color: #F5F7FA;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .quiz-container {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .progress {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            text-align: right;
+        }
+        .question-box {
+            font-size: 18px;
+            color: #2C3E50;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option-btn {
+            background-color: white;
+            border: 2px solid #E0E0E0;
+            border-radius: 8px;
+            padding: 14px 20px;
+            font-size: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            background-color: #F0F7FF;
+        }
+        .option-btn.correct {
+            background-color: #E8F8F5;
+            border-color: var(--success-color);
+            color: #117A65;
+        }
+        .option-btn.wrong {
+            background-color: #FDEDEC;
+            border-color: var(--error-color);
+            color: #943126;
+        }
+        .hint-box {
+            margin-top: 20px;
+            padding: 12px;
+            background-color: #FFF9E6;
+            border-left: 4px solid #F39C12;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #7F8C8D;
+            display: none;
+        }
+        .next-btn {
+            display: block;
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            cursor: pointer;
+            display: none;
+        }
+        .result-box {
+            text-align: center;
+            display: none;
+        }
+        .score-text {
+            font-size: 48px;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .restart-btn {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-ui">
+        <h1>🌟 英文隨機挑戰 🌟</h1>
+        <div class="progress" id="progress">題目載入中...</div>
+        <div class="question-box" id="question-text"></div>
+        <div class="options-list" id="options-container"></div>
+        <div class="hint-box" id="hint-container"></div>
+        <button class="next-btn" id="next-button" onclick="nextQuestion()">下一題</button>
+    </div>
+
+    <div id="result-ui" class="result-box">
+        <h1>🎉 測試完成 🎉</h1>
+        <p>你的最終得分是：</p>
+        <div class="score-text" id="score-display">0 / 0</div>
+        <button class="restart-btn" onclick="startQuiz()">再挑戰一次（題目會重新洗牌喔！）</button>
+    </div>
+</div>
+
+<script>
+    let allQuestions = []; // 存放從 JSON 讀取的所有題目
+    let currentQuestions = []; // 本次測驗抽出的題目
+    let currentIndex = 0;
+    let score = 0;
+    const QUESTIONS_TO_PLAY = 5; // 每次測驗想讓小朋友玩幾題？（可自由修改）
+
+    // 網頁開啟時，自動去抓取同目錄下的 json 檔案
+    async function loadQuestions() {
+        try {
+            const response = await fetch('questions.json');
+            allQuestions = await response.json();
+            startQuiz();
+        } catch (error) {
+            document.getElementById('progress').innerText = '載入題庫失敗，請確認 questions.json 是否存在。';
+            console.error(error);
+        }
+    }
+
+    // 洗牌演算法 (Fisher-Yates Shuffle) 用來打亂陣列
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // 開始（或重新開始）測驗
+    function startQuiz() {
+        document.getElementById('result-ui').style.display = 'none';
+        document.getElementById('quiz-ui').style.display = 'block';
+        
+        score = 0;
+        currentIndex = 0;
+
+        // 1. 先把總題庫完全打亂
+        let shuffledPool = shuffle([...allQuestions]);
+        // 2. 取出設定的題數（例如從總題庫隨機抽 5 題）
+        currentQuestions = shuffledPool.slice(0, Math.min(QUESTIONS_TO_PLAY, allQuestions.length));
+
+        showQuestion();
+    }
+
+    // 顯示當前題目
+    function showQuestion() {
+        const currentQ = currentQuestions[currentIndex];
+        
+        // 更新進度條
+        document.getElementById('progress').innerText = `第 ${currentIndex + 1} 題 / 共 ${currentQuestions.length} 題`;
+        document.getElementById('question-text').innerText = currentQ.question;
+        
+        // 隱藏下一題按鈕與提示框
+        document.getElementById('next-button').style.display = 'none';
+        const hintBox = document.getElementById('hint-container');
+        hintBox.style.display = 'none';
+
+        // 生成選項，並且連選項順序都一起「隨機打亂」
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        
+        let shuffledOptions = shuffle([...currentQ.options]);
+
+        shuffledOptions.forEach(option => {
+            const button = document.createElement('button');
+            button.className = 'option-btn';
+            button.innerText = option;
+            button.onclick = () => checkAnswer(button, option, currentQ.answer, currentQ.hint);
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    // 檢查答案是否正確
+    function checkAnswer(selectedButton, chosenOption, correctAnswer, hintText) {
+        const buttons = document.querySelectorAll('.option-btn');
+        // 點選後，把所有選項鎖定，不能重複點選
+        buttons.forEach(btn => btn.disabled = true);
+
+        if (chosenOption === correctAnswer) {
+            selectedButton.classList.add('correct');
+            score++;
+        } else {
+            selectedButton.classList.add('wrong');
+            // 同時把正確答案標示出來（綠色）
+            buttons.forEach(btn => {
+                if (btn.innerText === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+            // 答錯時，顯示貼心提示幫小朋友複習
+            if(hintText) {
+                const hintBox = document.getElementById('hint-container');
+                hintBox.innerText = `💡 複習小提示：${hintText}`;
+                hintBox.style.display = 'block';
+            }
+        }
+
+        // 顯示「下一題」或「看結果」按鈕
+        const nextBtn = document.getElementById('next-button');
+        if (currentIndex < currentQuestions.length - 1) {
+            nextBtn.innerText = '下一題';
+        } else {
+            nextBtn.innerText = '查看測驗結果';
+        }
+        nextBtn.style.display = 'block';
+    }
+
+    // 前進到下一題
+    function nextQuestion() {
+        currentIndex++;
+        if (currentIndex < currentQuestions.length) {
+            showQuestion();
+        } else {
+            showEndScreen();
+        }
+    }
+
+    // 顯示結算畫面
+    function showEndScreen() {
+        document.getElementById('quiz-ui').style.display = 'none';
+        document.getElementById('result-ui').style.display = 'block';
+        document.getElementById('score-display').innerText = `${score} / ${currentQuestions.length}`;
+    }
+
+    // 網頁載入後立即啟動
+    window.onload = loadQuestions;
+</script>
+
+</body>
+</html>
