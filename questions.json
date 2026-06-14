@@ -98,7 +98,7 @@
   { "subject": "英文", "category": "語法", "question": "These bananas ________ very sweet. Try one!", "options": ["am", "is", "are", "be"], "answer": "are", "hint": "主詞 These bananas 是複數，be 動詞要搭配 are。" },
   { "subject": "英文", "category": "語法", "question": "A: When do you usually go to bed? B: ________ 10:00 p.m.", "options": ["In", "On", "At", "To"], "answer": "At", "hint": "回答時間點（十點整），前面要配時間介系詞 At。" },
   { "subject": "英文", "category": "語法", "question": "I usually play online games ________ Saturdays.", "options": ["in", "on", "at", "to"], "answer": "on", "hint": "每逢「星期幾」或複數的星期幾，前方介系詞固定配 on。" },
-  { "subject": "英文", "category": "語法", "question": "A: Goodbye! See you tomorrow. B: ________", "options": ["Thank you.", "Bye-bye!", "You're welcome.", "I'm fine."], "answer": "Bye-bye!", "hint": "道別時的互相回應（再見）。" }
+  { "subject": "英文", "category": "語法", "question": "A: Goodbye! See you tomorrow. B: ________", "options": ["Thank you.", "Bye-bye!", "You're welcome.", "I'm fine."], "answer": "Bye-bye!", "hint": "道別時的互相回應（再見）。" },
   { "subject": "國文", "category": "字音字形", "question": "請選出「 」中注音完全正確的選項：", "options": ["「褪」色：ㄊㄨㄟˋ", "踉「蹌」：ㄑㄧㄤˋ", "「聆」聽：ㄌㄧㄥˊ", "「塑」膠：ㄙㄨˋ"], "answer": "「聆」聽：ㄌㄧㄥˊ", "hint": "「褪」色應讀ㄊㄨㄣˋ；踉「蹌」應讀ㄑㄧㄤˋ；「塑」膠應讀ㄙㄨˋ。" },
   { "subject": "國文", "category": "字音字形", "question": "下列哪一組引號中的字，讀音「相同」？", "options": ["「供」應 ／ 「供」品", "「處」罰 ／ 「處」所", "「削」價 ／ 「削」鉛筆", "高「亢」 ／ 「抗」議"], "answer": "高「亢」 ／ 「抗」議", "hint": "高亢、抗議皆讀ㄎㄤˋ。供應(ㄍㄨㄥ)／供品(ㄍㄨㄥˋ)；處罰(ㄔㄨˇ)／處所(ㄔㄨˋ)；削價(ㄒㄧㄠ)／削鉛筆(ㄒㄧㄠ)。" },
   { "subject": "國文", "category": "字音字形", "question": "請選出字形完全正確的選項：", "options": ["不屑一顧", "迫不急待", "再接再勵", "消聲匿跡"], "answer": "不屑一顧", "hint": "應為：迫不「及」待、再接再「厲」、「銷」聲匿跡。" },
